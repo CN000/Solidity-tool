@@ -55,14 +55,12 @@ contract ERC20 is ERC20Basic {
 /**
  * @title Multi Sender, support ETH and ERC20 Tokens
 */
-
 contract BasicToken is ERC20Basic {
-
     using SafeMath for uint;
 
     mapping(address => uint) balances;
 
-    function transfer(address _to, uint _value) public {
+    function transfer(address _to, uint _value) public{
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
@@ -75,7 +73,7 @@ contract BasicToken is ERC20Basic {
 
 /**
  * @title Multi Sender, support ETH and ERC20 Tokens
-*/
+ */
 contract StandardToken is BasicToken, ERC20 {
     mapping (address => mapping (address => uint)) allowed;
 
@@ -100,6 +98,7 @@ contract StandardToken is BasicToken, ERC20 {
 /**
  * @title Multi Sender, support ETH and ERC20 Tokens
 */
+
 contract Ownable {
     address public owner;
 
@@ -122,74 +121,36 @@ contract Ownable {
 /**
  * @title Multi Sender, support ETH and ERC20 Tokens
 */
-
 contract MultiSender is Ownable{
 
     using SafeMath for uint;
 
-
-    event LogTokenMultiSent(address token,uint256 total);
+    event LogTokenMultiSent(address token, uint256 total);
     event LogGetToken(address token, address receiver, uint256 balance);
+
+
     address public receiverAddress;
-    uint public txFee = 0.01 ether;
-    uint public VIPFee = 1 ether;
+    uint256 public txFee = 10000000; // in wei
 
-    /* VIP List */
-    mapping(address => bool) public vipList;
 
-    /*
-  *  get balance
-  */
+    /**
+     *  get balance
+     */
     function getBalance(address _tokenAddress) onlyOwner public {
         address _receiverAddress = getReceiverAddress();
         if(_tokenAddress == address(0)){
             require(_receiverAddress.send(address(this).balance));
             return;
         }
+
         StandardToken token = StandardToken(_tokenAddress);
         uint256 balance = token.balanceOf(this);
         token.transfer(_receiverAddress, balance);
         emit LogGetToken(_tokenAddress,_receiverAddress,balance);
     }
 
-
     /*
-   *  Register VIP
-   */
-    function registerVIP() payable public {
-        require(msg.value >= VIPFee);
-        address _receiverAddress = getReceiverAddress();
-        require(_receiverAddress.send(msg.value));
-        vipList[msg.sender] = true;
-    }
-
-    /*
-    *  VIP list
-    */
-    function addToVIPList(address[] _vipList) onlyOwner public {
-        for (uint i =0;i<_vipList.length;i++){
-            vipList[_vipList[i]] = true;
-        }
-    }
-
-    /*
-      * Remove address from VIP List by Owner
-    */
-    function removeFromVIPList(address[] _vipList) onlyOwner public {
-        for (uint i =0;i<_vipList.length;i++){
-            vipList[_vipList[i]] = false;
-        }
-    }
-
-    /*
-        * Check isVIP
-    */
-    function isVIP(address _addr) public view returns (bool) {
-        return _addr == owner || vipList[_addr];
-    }
-
-    /*
-        * set receiver address
+        set receiver address
     */
     function setReceiverAddress(address _addr) onlyOwner public {
         require(_addr != address(0));
@@ -198,7 +159,7 @@ contract MultiSender is Ownable{
 
 
     /*
-        * get receiver address
+        get receiver address
     */
     function getReceiverAddress() public view returns  (address){
         if(receiverAddress == address(0)){
@@ -208,33 +169,13 @@ contract MultiSender is Ownable{
         return receiverAddress;
     }
 
-    /*
-       * set vip fee
-   */
-    function setVIPFee(uint _fee) onlyOwner public {
-        VIPFee = _fee;
-    }
-
-    /*
-        * set tx fee
-    */
-    function setTxFee(uint _fee) onlyOwner public {
-        txFee = _fee;
-    }
-
-
     function ethSendSameValue(address[] _to, uint _value) internal {
 
         uint sendAmount = _to.length.sub(1).mul(_value);
         uint remainingValue = msg.value;
 
-        bool vip = isVIP(msg.sender);
-        if(vip){
-            require(remainingValue >= sendAmount);
-        }else{
-            require(remainingValue >= sendAmount.add(txFee)) ;
-        }
-        require(_to.length <= 255);
+        require(remainingValue >= sendAmount.add(txFee), "remainingValue >= sendAmount.add(txFee)") ;
+        require(_to.length <= 255 ,"_to.length <= 255");
 
         for (uint8 i = 0; i < _to.length; i++) {
             remainingValue = remainingValue.sub(_value);
@@ -249,12 +190,7 @@ contract MultiSender is Ownable{
         uint sendAmount = _value[0];
         uint remainingValue = msg.value;
 
-        bool vip = isVIP(msg.sender);
-        if(vip){
-            require(remainingValue >= sendAmount);
-        }else{
-            require(remainingValue >= sendAmount.add(txFee)) ;
-        }
+        require(remainingValue >= sendAmount.add(txFee)) ;
 
         require(_to.length == _value.length);
         require(_to.length <= 255);
@@ -270,10 +206,8 @@ contract MultiSender is Ownable{
     function coinSendSameValue(address _tokenAddress, address[] _to, uint _value)  internal {
 
         uint sendValue = msg.value;
-        bool vip = isVIP(msg.sender);
-        if(!vip){
-            require(sendValue >= txFee);
-        }
+
+        require(sendValue >= txFee);
         require(_to.length <= 255);
 
         address from = msg.sender;
@@ -281,30 +215,34 @@ contract MultiSender is Ownable{
 
         StandardToken token = StandardToken(_tokenAddress);
         for (uint8 i = 0; i < _to.length; i++) {
-            token.transfer(_to[i], _value);
+            token.transferFrom(msg.sender, _to[i], _value);
         }
 
         emit LogTokenMultiSent(_tokenAddress,sendAmount);
+
     }
 
     function coinSendDifferentValue(address _tokenAddress, address[] _to, uint[] _value)  internal  {
         uint sendValue = msg.value;
-        bool vip = isVIP(msg.sender);
-        if(!vip){
-            require(sendValue >= txFee);
-        }
 
-        require(_to.length == _value.length);
-        require(_to.length <= 255);
+        require(sendValue >= txFee,          "sendValue >= txFee");
+        require(_to.length == _value.length, "_to.length == _value.length");
+        require(_to.length <= 255,           "number of Address  <= 255");
 
-        uint256 sendAmount = _value[0];
+        uint256 sendAmount  = _value[0];
         StandardToken token = StandardToken(_tokenAddress);
 
         for (uint8 i = 0; i < _to.length; i++) {
-            token.transfer(_to[i], _value[i]);
-        }
-        emit LogTokenMultiSent(_tokenAddress,sendAmount);
+            bool success;
+            success = token.call(bytes4(sha3 ("allowance(uint256,address)") ),  _value[i], msg.sender)
+            if (!success) {
+                throw;
+            }
 
+            token.transferFrom(msg.sender, _to[i], _value[i]);
+        }
+
+        emit LogTokenMultiSent(_tokenAddress,sendAmount);
     }
 
     /*
@@ -313,7 +251,6 @@ contract MultiSender is Ownable{
 
     function sendEth(address[] _to, uint _value) payable public {
         ethSendSameValue(_to,_value);
-    }
     }
 
     /*
@@ -326,7 +263,6 @@ contract MultiSender is Ownable{
     /*
         Send ether with the different value by a implicit call method
     */
-
     function mutiSendETHWithDifferentValue(address[] _to, uint[] _value) payable public {
         ethSendDifferentValue(_to,_value);
     }
@@ -349,7 +285,7 @@ contract MultiSender is Ownable{
     }
 
     /*
-        Send coin with the different value by a implicit call method, this method can save some fee.
+       Send coin with the different value by a implicit call method, this method can save some fee.
     */
     function mutiSendCoinWithDifferentValue(address _tokenAddress, address[] _to, uint[] _value) payable public {
         coinSendDifferentValue(_tokenAddress, _to, _value);
@@ -361,6 +297,7 @@ contract MultiSender is Ownable{
     function multisendToken(address _tokenAddress, address[] _to, uint[] _value) payable public {
         coinSendDifferentValue(_tokenAddress, _to, _value);
     }
+
     /*
         Send coin with the same value by a explicit call method
     */

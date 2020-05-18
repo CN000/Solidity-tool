@@ -1,3 +1,6 @@
+/*
+  refer-by: https://ethereum.stackexchange.com/questions/15953/send-ethers-from-one-contract-to-another
+*/
 pragma solidity ^0.4.24;
 
 contract TransferEtherTo {
