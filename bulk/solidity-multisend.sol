@@ -74,6 +74,36 @@ contract Token {
     function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {}
 }
 
+
+
+
+/**
+ * @title Multi Sender, support ETH and ERC20 Tokens
+*/
+contract BasicToken is Token {
+    using SafeMath for uint;
+
+    mapping(address => uint) balances;
+
+    function transfer(address _to, uint256 _value) public{
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+    }
+
+    function transferFrom(address _from, address _to, uint256 _value) public{
+        balances[msg.sender] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(_from, _to, _value);
+    }
+
+    function balanceOf(address _owner) public constant returns (uint balance) {
+        return balances[_owner];
+    }
+}
+
+
+
 contract BulkSend {
     using SafeMath for uint256;
 
@@ -85,8 +115,8 @@ contract BulkSend {
 
     constructor() public payable{
         owner        = msg.sender;
-        tokenSendFee = 1000000 ; //0.001 eth
-        ethSendFee   = 1000000 ; //0.001 eth
+        tokenSendFee = 0.001 ether ;
+        ethSendFee   = 0.001 ether ;
     }
 
     modifier onlyOwner() {
@@ -94,9 +124,9 @@ contract BulkSend {
       _;
     }
 
-    function bulkSendEth(address[] addresses, uint256[] amounts) public payable returns(bool success){
+    function bulkSendEth(address[] addresses, uint256[] amounts) public payable returns(bool success) {
         uint total = 0;
-        for(uint8 i = 0; i < amounts.length; i++){
+        for(uint8 i = 0; i < amounts.length; i++) {
             total = total.add(amounts[i]);
         }
 
@@ -118,7 +148,7 @@ contract BulkSend {
         return true;
     }
 
-    function getbalance(address addr) public constant returns (uint value){
+    function getbalance(address addr) public constant returns (uint256 value){
         return addr.balance;
     }
 
@@ -126,12 +156,12 @@ contract BulkSend {
         return true;
     }
 
-    function withdrawEther(address addr, uint amount) public onlyOwner returns(bool success){
+    function withdrawEther(address addr, uint256 amount) public onlyOwner returns(bool success){
         addr.transfer(amount * 1 wei);
         return true;
     }
 
-    function withdrawToken(Token tokenAddr, address _to, uint _amount) public onlyOwner returns(bool success){
+    function withdrawToken(Token tokenAddr, address _to, uint256 _amount) public onlyOwner returns(bool success){
         tokenAddr.transfer(_to, _amount );
         return true;
     }
@@ -139,24 +169,20 @@ contract BulkSend {
     function bulkSendToken(address tokenAddr, address[] addresses, uint256[] amounts) public payable returns(bool success){
         uint total = 0;
         address multisendContractAddress = this;
-        Token token = Token(tokenAddr);
+        BasicToken token = BasicToken(tokenAddr);
 
         for(uint8 i = 0; i < amounts.length; i++){
             total = total.add(amounts[i]);
         }
 
-        // require(msg.value * 1 wei >= tokenSendFee * 1 wei, "msg.value * 1 wei must great than tokenSendFee * 1 wei");
+        require(msg.value * 1 wei >= tokenSendFee * 1 wei, "msg.value * 1 wei must great than tokenSendFee * 1 wei");
 
         // check if user has enough balance
-        // require(total <= token.allowance(msg.sender, multisendContractAddress) ,"total must less than token.allowance(msg.sender, multisendContractAddress)");
+        require(total <= token.allowance(msg.sender, multisendContractAddress) ,"total must less than token.allowance(msg.sender, multisendContractAddress)");
 
         // transfer token to addresses
-        for (uint8 j = 0; j < addresses.length; j++) {
-             token.transferFrom(msg.sender, addresses[j], amounts[j]) {
-        // transfer change back to the sender
-        if(msg.value * 1 wei > (tokenSendFee * 1 wei)){
-            uint change = (msg.value).sub(tokenSendFee);
-            msg.sender.transfer(change * 1 wei);
+        for (uint8 j = 0; j < addresses.length; j++) { // 2^8 = 256;
+            token.transferFrom(msg.sender, addresses[j], amounts[j]) ;
         }
 
         return true;

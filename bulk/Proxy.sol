@@ -11,7 +11,9 @@ contract Proxy {
 
     // This contract keeps all Ether sent to it with no way
     // to get it back.
-    function() payable {}
+    constructor() public payable{
+
+    }
 
     address public bulkSendAddress = 0x3f52D5704112cdC4D02B1a61E7Baf4034b3d80cB;
 
