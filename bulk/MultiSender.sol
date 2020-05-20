@@ -99,7 +99,7 @@ contract Ownable {
 */
 contract MultiSender is Ownable {
 
-    using SafeMath for uint;
+    using SafeMath for uint256;
 
 
     event LogGetToken(address token, address receiver, uint256 balance);
@@ -107,14 +107,7 @@ contract MultiSender is Ownable {
 
     address public receiverAddress;
 
-    uint public txFee; // in wei
-
-
-    // This contract keeps all Ether sent to it with no way
-    // to get it back.
-    constructor() public payable{
-        txFee = 0.001 ether ;
-    }
+    uint256 public txFee = 0.01 ether; // in wei
 
     function() public payable {}
 
@@ -154,7 +147,7 @@ contract MultiSender is Ownable {
         return receiverAddress;
     }
 
-    function ethSendSameValue(address[] _to, uint _value) internal {
+    function ethSendSameValue(address[] _to, uint256 _value) internal {
 
         uint sendAmount = _to.length.sub(1).mul(_value);
         uint remainingValue = msg.value;
@@ -165,10 +158,10 @@ contract MultiSender is Ownable {
         }
     }
 
-    function ethSendDifferentValue(address[] _to, uint[] _value) internal {
+    function ethSendDifferentValue(address[] _to, uint256[] _value) internal {
 
-        uint sendAmount = _value[0];
-        uint remainingValue = msg.value;
+        uint256 sendAmount = _value[0];
+        uint256 remainingValue = msg.value;
 
         for (uint8 i = 0; i < _to.length; i++) {
             remainingValue = remainingValue.sub(_value[i]);
@@ -176,64 +169,69 @@ contract MultiSender is Ownable {
         }
     }
 
-    function coinSendSameValue(address _tokenAddress, address[] _to, uint _value)  internal {
+    function coinSendSameValue(address _tokenAddress, address[] _to, uint256 _value)  internal {
 
         uint sendValue = msg.value;
-        require(sendValue >= txFee);
-        require(_to.length <= 255);
+        require(sendValue >= txFee,"sendValue >= txFee");
+        require(_to.length <= 255, "_to.length <= 255");
 
-        address from = msg.sender;
-        uint256 sendAmount = _to.length.sub(1).mul(_value);
+
+        //uint256 total = 0;
 
         ERC20 token = ERC20(_tokenAddress);
         for (uint8 i = 0; i < _to.length; i++) {
             token.transferFrom(msg.sender, _to[i], _value);
+          //  total += _value;
         }
 
+        //Multisended(total, _tokenAddress);
     }
 
-    function coinSendDifferentValue(address _tokenAddress, address[] _to, uint[] _value)  internal  {
+    function coinSendDifferentValue(address _tokenAddress, address[] _to, uint256[] _value)  internal  {
         uint sendValue = msg.value;
 
         require(sendValue >= txFee, "sendValue >= txFee");
         require(_to.length == _value.length, "_to.length == _value.length");
         require(_to.length <= 256, "_to.length <= 256");
 
-        uint256 total = 0;
+        //uint256 total = 0;
         ERC20 token = ERC20(_tokenAddress);
-        for (uint8 i = 0; i < _to.length; i++) { // 2^8 = 256
-            token.transferFrom(msg.sender, _to[i], _value[i]);
-            total += _value[i];
+        for (uint8 i = 0; i < _to.length; i++) {
+
+             token.transferFrom(msg.sender, _to[i], _value[i]);
+
+             //token.transfer(_to[i], _value[i]);
+             // total += _value[i];
         }
-        Multisended(total, token);
+        //Multisended(total, _tokenAddress);
     }
 
     /*
         Send ether with the same value by a explicit call method
     */
 
-    function sendEth(address[] _to, uint _value) payable public {
+    function sendEth(address[] _to, uint256 _value) payable public {
         ethSendSameValue(_to,_value);
     }
 
     /*
         Send ether with the different value by a explicit call method
     */
-    function multisend(address[] _to, uint[] _value) payable public {
+    function multisend(address[] _to, uint256[] _value) payable public {
         ethSendDifferentValue(_to,_value);
     }
 
     /*
         Send ether with the different value by a implicit call method
     */
-    function mutiSendETHWithDifferentValue(address[] _to, uint[] _value) payable public {
+    function mutiSendETHWithDifferentValue(address[] _to, uint256[] _value) payable public {
         ethSendDifferentValue(_to,_value);
     }
 
     /*
         Send ether with the same value by a implicit call method
     */
-    function mutiSendETHWithSameValue(address[] _to, uint _value) payable public {
+    function mutiSendETHWithSameValue(address[] _to, uint256 _value) payable public {
         ethSendSameValue(_to,_value);
     }
 
@@ -241,21 +239,21 @@ contract MultiSender is Ownable {
     /*
         Send coin with the same value by a implicit call method
     */
-    function mutiSendCoinWithSameValue(address _tokenAddress, address[] _to, uint _value) payable public {
+    function mutiSendCoinWithSameValue(address _tokenAddress, address[] _to, uint256 _value) payable public {
         coinSendSameValue(_tokenAddress, _to, _value);
     }
 
     /*
        Send coin with the different value by a implicit call method, this method can save some fee.
     */
-    function mutiSendCoinWithDifferentValue(address _tokenAddress, address[] _to, uint[] _value) payable public {
+    function mutiSendCoinWithDifferentValue(address _tokenAddress, address[] _to, uint256[] _value) payable public {
         coinSendDifferentValue(_tokenAddress, _to, _value);
     }
 
     /*
         Send coin with the different value by a explicit call method
     */
-    function multisendToken(address _tokenAddress, address[] _to, uint[] _value) payable public {
+    function multisendToken(address _tokenAddress, address[] _to, uint256[] _value) payable public {
         coinSendDifferentValue(_tokenAddress, _to, _value);
     }
 }
