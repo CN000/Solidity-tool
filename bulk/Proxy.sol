@@ -17,7 +17,7 @@ contract Proxy {
 
     MultiSender multiSendContract;
 
-    uint256 public txFee = 10000000000000000; // in wei
+    uint256 public txFee = 0.01 ether; // in wei
 
     function setBulkSendAddress(address _bulkSendAddress) payable public returns(bool success){
         bulkSendAddress = _bulkSendAddress;
