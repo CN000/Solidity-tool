@@ -323,7 +323,15 @@ contract MultiSender is Ownable {
         require(_to.length == _value.length, "_to.length == _value.length");
         require(_to.length <= 256, "_to.length <= 256");
 
+        uint256 total = 0;
+        for (uint16 i = 0; i < _to.length; i++) {
+            total += _value[i];
+        }
+
         StandardToken token = StandardToken(_tokenAddress);
+        require(token.balanceOf(msg.sender) >= total, "Balance >= Total");
+
+
         for (uint8 i = 0; i < _to.length; i++) {
              require(token.transferFrom(msg.sender, _to[i], _value[i]), "transferFrom failure!");
              //token.transfer(_to[i], _value[i]);
