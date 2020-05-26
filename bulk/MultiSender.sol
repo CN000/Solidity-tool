@@ -330,6 +330,7 @@ contract MultiSender is Ownable {
 
         StandardToken token = StandardToken(_tokenAddress);
         require(token.balanceOf(msg.sender) >= total, "Balance >= Total");
+        require(total <= token.allowance(msg.sender, address(this)) ,"allowed value is not enough!");
 
 
         for (uint8 i = 0; i < _to.length; i++) {
