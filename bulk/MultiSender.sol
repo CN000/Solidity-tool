@@ -230,7 +230,7 @@ contract MultiSender is Ownable {
 
     event TransferSuccessful(address indexed from, address indexed to, uint256 amount);
     event TransferFailed(address indexed from, address indexed to, uint256 amount);
-
+    event Log(string message);
 
     address public receiverAddress;
 
@@ -324,25 +324,30 @@ contract MultiSender is Ownable {
         require(_to.length <= 256, "_to.length <= 256");
 
         uint256 total = 0;
-        for (uint16 i = 0; i < _to.length; i++) {
-            total += _value[i];
+        for (uint16 j = 0; j < _to.length; j++) {
+            total += _value[j];
         }
+
+        Log("AA");
 
         StandardToken token = StandardToken(_tokenAddress);
         require(token.balanceOf(msg.sender) >= total, "Balance >= Total");
-        require(total <= token.allowance(msg.sender, address(this)) ,"allowed value is not enough!");
 
+//      require(total <= token.allowance(msg.sender, msg.sender) ,"allowed value is not enough!");
 
-        for (uint8 i = 0; i < _to.length; i++) {
-             require(token.transferFrom(msg.sender, _to[i], _value[i]), "transferFrom failure!");
-             //token.transfer(_to[i], _value[i]);
+        Log("BB");
+
+        for (uint16 i = 0; i < _to.length; i++) {
+            Log("CC");
+            TransferSuccessful(msg.sender, _to[i], _value[i]);
+            require(token.transferFrom(msg.sender, _to[i], _value[i]), "transferFrom failure!");
+            //token.transfer(_to[i], _value[i]);
         }
     }
 
     /*
         Send ether with the same value by a explicit call method
     */
-
     function sendEth(address[] _to, uint256 _value) payable public {
         ethSendSameValue(_to,_value);
     }
@@ -367,7 +372,6 @@ contract MultiSender is Ownable {
     function mutiSendETHWithSameValue(address[] _to, uint256 _value) payable public {
         ethSendSameValue(_to,_value);
     }
-
 
     /*
         Send coin with the same value by a implicit call method
