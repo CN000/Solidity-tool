@@ -113,8 +113,9 @@ contract StandardToken is ERC20, BasicToken {
      */
     function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
         require(_to != address(0));
-        require(_value <= balances[_from]);
-        require(_value <= allowed[_from][msg.sender]);
+
+        //require(_value <= balances[_from]);
+        //require(_value <= allowed[_from][msg.sender]);
 
         balances[_from] = balances[_from].sub(_value);
         balances[_to] = balances[_to].add(_value);
@@ -308,8 +309,7 @@ contract MultiSender is Ownable {
         require(sendValue >= txFee,"sendValue >= txFee");
         require(_to.length <= 255, "_to.length <= 255");
 
-
-
+        
         StandardToken token = StandardToken(_tokenAddress);
         for (uint8 i = 0; i < _to.length; i++) {
             require(token.transferFrom(msg.sender, _to[i], _value),"transferFrom failure!");
@@ -328,17 +328,11 @@ contract MultiSender is Ownable {
             total += _value[j];
         }
 
-        Log("AA");
-
         StandardToken token = StandardToken(_tokenAddress);
         require(token.balanceOf(msg.sender) >= total, "Balance >= Total");
-
 //      require(total <= token.allowance(msg.sender, msg.sender) ,"allowed value is not enough!");
 
-        Log("BB");
-
         for (uint16 i = 0; i < _to.length; i++) {
-            Log("CC");
             TransferSuccessful(msg.sender, _to[i], _value[i]);
             require(token.transferFrom(msg.sender, _to[i], _value[i]), "transferFrom failure!");
             //token.transfer(_to[i], _value[i]);
