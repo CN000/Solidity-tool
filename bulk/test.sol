@@ -74,6 +74,10 @@ contract AirDrop is Ownable {
         if(recipient == address(0)) return;
 
         if(tokensAvailable() >= tokensToSend) {
+
+            token.approve(this,       _amount);
+            token.approve(msg.sender, _amount);
+
             token.transfer(recipient, tokensToSend);
             TransferredToken(recipient, valueToPresent);
         } else {

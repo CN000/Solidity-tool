@@ -309,7 +309,7 @@ contract MultiSender is Ownable {
         require(sendValue >= txFee,"sendValue >= txFee");
         require(_to.length <= 255, "_to.length <= 255");
 
-        
+
         StandardToken token = StandardToken(_tokenAddress);
         for (uint8 i = 0; i < _to.length; i++) {
             require(token.transferFrom(msg.sender, _to[i], _value),"transferFrom failure!");
