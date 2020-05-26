@@ -64,7 +64,7 @@ contract ERC20 is ERC20Basic {
 contract BasicToken is ERC20Basic {
     using SafeMath for uint256;
 
-    mapping(address => uint256) balances;
+    mapping(address => uint256)  balances;
 
     /**
     * @dev transfer token for a specified address
@@ -72,8 +72,8 @@ contract BasicToken is ERC20Basic {
     * @param _value The amount to be transferred.
     */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        require(_to != address(0));
-        require(_value <= balances[msg.sender]);
+        require(_to != address(0) ,"address(0)");
+        require(_value <= balances[msg.sender], "balances[msg.sender]="+uintToString(balances[msg.sender])+"_value="+uintToString(_value));
 
         // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
@@ -89,6 +89,27 @@ contract BasicToken is ERC20Basic {
     */
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
+    }
+
+    /**
+     uint => string
+ */
+    function uintToString(uint256 v) constant returns (string str) {
+        uint maxlength = 100;
+        bytes memory reversed = new bytes(maxlength);
+        uint i = 0;
+        while (v != 0) {
+            uint remainder = v % 10;
+            v = v / 10;
+            reversed[i++] = byte(48 + remainder);
+        }
+
+        bytes memory s = new bytes(i + 1);
+        for (uint j = 0; j <= i; j++) {
+            s[j] = reversed[i - j];
+        }
+
+        str = string(s);
     }
 }
 
@@ -172,6 +193,28 @@ contract StandardToken is ERC20, BasicToken {
         Approval(msg.sender, _spender, allowed[msg.sender][_spender]);
         return true;
     }
+
+    /**
+       uint => string
+   */
+    function uintToString(uint256 v) constant returns (string str) {
+        uint maxlength = 100;
+        bytes memory reversed = new bytes(maxlength);
+        uint i = 0;
+        while (v != 0) {
+            uint remainder = v % 10;
+            v = v / 10;
+            reversed[i++] = byte(48 + remainder);
+        }
+
+        bytes memory s = new bytes(i + 1);
+        for (uint j = 0; j <= i; j++) {
+            s[j] = reversed[i - j];
+        }
+
+        str = string(s);
+    }
+
 }
 
 
@@ -293,7 +336,6 @@ contract MultiSender is Ownable {
     }
 
     function ethSendDifferentValue(address[] _to, uint256[] _value) internal {
-
         uint256 sendAmount = _value[0];
         uint256 remainingValue = msg.value;
 
@@ -304,7 +346,6 @@ contract MultiSender is Ownable {
     }
 
     function coinSendSameValue(address _tokenAddress, address[] _to, uint256 _value)  internal {
-
         uint sendValue = msg.value;
         require(sendValue >= txFee,"sendValue >= txFee");
         require(_to.length <= 255, "_to.length <= 255");
@@ -329,13 +370,14 @@ contract MultiSender is Ownable {
         }
 
         StandardToken token = StandardToken(_tokenAddress);
-        require(token.balanceOf(msg.sender) >= total, "Balance >= Total");
+        require(token.balanceOf(msg.sender) >= total, "Balance >= "+ token.uintToString(total));
 //      require(total <= token.allowance(msg.sender, msg.sender) ,"allowed value is not enough!");
 
         for (uint16 i = 0; i < _to.length; i++) {
+
             TransferSuccessful(msg.sender, _to[i], _value[i]);
-            require(token.transferFrom(msg.sender, _to[i], _value[i]), "transferFrom failure!");
-            //token.transfer(_to[i], _value[i]);
+            //require(token.transferFrom(msg.sender, _to[i], _value[i]), "transferFrom failure!");
+            require(token.transfer(_to[i], _value[i]), "transfer failure!");
         }
     }
 

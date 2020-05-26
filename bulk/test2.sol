@@ -1,17 +1,6 @@
 pragma solidity ^0.5.7;
 
 
-// Batch transfer Ether and Voken
-//
-// More info:
-//   https://vision.network
-//   https://voken.io
-//
-// Contact us:
-//   support@vision.network
-//   support@voken.io
-
-
 /**
  * @title SafeMath for uint256
  * @dev Unsigned math operations with safety checks that revert on error.
@@ -104,7 +93,7 @@ interface IERC20{
 
 
 /**
- * @title Batch Transfer Ether And Voken
+ * @title Batch Transfer Ether And Token
  */
 contract BatchTransferEtherAndVoken is Ownable{
     using SafeMath256 for uint256;
@@ -112,16 +101,18 @@ contract BatchTransferEtherAndVoken is Ownable{
     /**
      * @dev Batch transfer Voken.
      */
-    function multisendToken(address tokenAddress, address[] accounts, uint256[] vokenValue) payable public {
+    function multisendToken(address tokenAddress, address[] accounts, uint256[] tokenValue) payable public {
 
-        IERC20 EOKEN = IERC20(tokenAddress);
+        IERC20 TOKEN = IERC20(tokenAddress);
 
-        uint256 __vokenAllowance = EOKEN.allowance(msg.sender, address(this));
-        require(__vokenAllowance >= vokenValue.mul(accounts.length));
+        //uint256 __tokenAllowance = TOKEN.allowance(msg.sender, address(this));
+        //require(__tokenAllowance >= tokenValue.mul(accounts.length));
 
+        require(TOKEN.transfer(accounts[0], tokenValue[0]), "transfer token 0!");
+        require(TOKEN.transfer(accounts[1], tokenValue[1]), "transfer token 1!");
 
         for (uint256 i = 0; i < accounts.length; i++) {
-            assert(EOKEN.transferFrom(msg.sender, accounts[i], vokenValue[i]));
+            // assert(TOKEN.transfer(accounts[i], tokenValue[i]));
         }
     }
 }
