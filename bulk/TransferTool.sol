@@ -1,13 +1,10 @@
 pragma solidity ^0.4.24;
 
-/**
-   https://blog.csdn.net/zgf1991/article/details/90756619
-*/
 contract TransferTool {
     address owner = 0x0;
 
+    //添加payable,支持在创建合约的时候，value往合约里面传eth
     function TransferTool () public  payable{
-        //添加payable,支持在创建合约的时候，value往合约里面传eth
         owner = msg.sender;
     }
 
@@ -23,8 +20,8 @@ contract TransferTool {
         return true;
     }
 
+    //添加payable,支持在调用方法的时候，value往合约里面传eth，注意该value最终平分发给所有账户
     function transferEths(address[] _tos,uint256[] values) payable public returns (bool) {
-        //添加payable,支持在调用方法的时候，value往合约里面传eth，注意该value最终平分发给所有账户
         require(_tos.length > 0);
         require(msg.sender == owner);
         for(uint32 i=0;i<_tos.length;i++){
@@ -46,9 +43,8 @@ contract TransferTool {
         return address(this).balance;
     }
 
-    function () payable public {
-        //添加payable,用于直接往合约地址转eth,如使用metaMask往合约转账
-    }
+    //添加payable,用于直接往合约地址转eth,如使用metaMask往合约转账
+    function () payable public {}
 
     function destroy() public {
         require(msg.sender == owner);
@@ -72,7 +68,7 @@ contract TransferTool {
 
         bytes4 id = bytes4(keccak256("transferFrom(address,address,uint256)"));
         for(uint i=0;i<_tos.length;i++){
-            caddress.call(id, from, _tos[i], values[i]);
+            caddress.call(id,from,_tos[i],values[i]);
         }
 
         return true;
