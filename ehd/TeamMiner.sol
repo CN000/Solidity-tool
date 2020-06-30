@@ -59,7 +59,7 @@ contract TeamMiner {
     // remove address from miner list
     // https://ethereum.stackexchange.com/questions/56281/how-to-check-if-an-array-key-exists
     function unregister(address account) public returns (bool) {
-       for(uint256 i=0; i < minerList.length; i++) {
+       for(uint256 i=0; i < minerList.length; i++ ) {
            if( minerList[i] == account ) {
                delete minerList[i];
            }
@@ -84,14 +84,14 @@ contract TeamMiner {
     }
 
     // 处理每个区块奖励
-    function processReward() public returns (bool) {
+    function processReward(uint256 blockNumber) public returns (bool) {
         address[] memory _minerList;
         address   miner;
         uint256   _fundReward;
         uint256   _avgRewardPerMiner;
 
 
-        for(uint256 i=0; i<=blocks.length; i++) {
+        for(uint256 i=0; i<= blocks.length; i++) {
             if( blocks[i].isRewardProcessed == true ) {
                continue;
             }
@@ -109,7 +109,7 @@ contract TeamMiner {
 
             // 基金会地址
             //require(fundAddress.send(_fundReward), "Send FundReward");
-            if (!fundAddress.send(_fundReward)){
+            if (!fundAddress.send(_fundReward)) {
                 throw;
             }
 
